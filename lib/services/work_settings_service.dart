@@ -62,18 +62,37 @@ class WorkSettingsService {
     DateTime? timeOut,
     TimeOfDay lunchStart,
     TimeOfDay lunchEnd,
+    TimeOfDay shiftStart,
   ) {
     if (timeIn == null || timeOut == null || !timeOut.isAfter(timeIn)) {
       return 0.0;
     }
 
-    final totalMinutes = timeOut.difference(timeIn).inMinutes;
-    final lunchOverlapMinutes = _calculateOverlapMinutes(
-      timeIn,
-      timeOut,
-      _timeOnDate(timeIn, lunchStart),
-      _timeOnDate(timeIn, lunchEnd),
-    );
+    final lunchStartDate = _timeOnDate(timeIn, lunchStart);
+    final lunchEndDate = _timeOnDate(timeIn, lunchEnd);
+    final shiftStartDate = _timeOnDate(timeIn, shiftStart);
+
+    // Treat as whole-day work only when the time range spans both sides of lunch.
+    final spansLunchWindow =
+        timeIn.isBefore(lunchStartDate) && timeOut.isAfter(lunchEndDate);
+
+    // For whole-day logs, early time-ins are counted from shift start.
+    final effectiveTimeIn =
+        spansLunchWindow && timeIn.isBefore(shiftStartDate) ? shiftStartDate : timeIn;
+
+    if (!timeOut.isAfter(effectiveTimeIn)) {
+      return 0.0;
+    }
+
+    final totalMinutes = timeOut.difference(effectiveTimeIn).inMinutes;
+    final lunchOverlapMinutes = spansLunchWindow
+        ? _calculateOverlapMinutes(
+            effectiveTimeIn,
+            timeOut,
+            lunchStartDate,
+            lunchEndDate,
+          )
+        : 0;
 
     final workedMinutes = totalMinutes - lunchOverlapMinutes;
     return workedMinutes > 0 ? workedMinutes / 60.0 : 0.0;

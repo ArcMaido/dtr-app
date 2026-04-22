@@ -1,5 +1,9 @@
+import 'dart:io';
+import 'package:android_intent_plus/android_intent.dart';
+import 'package:android_intent_plus/flag.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/time_record.dart';
 import '../services/database_service.dart';
@@ -157,39 +161,135 @@ class _ExportScreenState extends State<ExportScreen> {
     return remainder == 0 ? _recordsPerPage : remainder;
   }
 
+  Future<bool> _ensureExportPermission() async {
+    if (!Platform.isAndroid) {
+      return true;
+    }
+
+    final manageStatus = await Permission.manageExternalStorage.request();
+    if (manageStatus.isGranted) {
+      return true;
+    }
+
+    final storageStatus = await Permission.storage.request();
+    if (storageStatus.isGranted) {
+      return true;
+    }
+
+    _showSnackBar(
+      'Please allow Files permission so exports can be saved in Downloads or Documents.',
+    );
+    return false;
+  }
+
+  String _getFolderLabelFromPath(String path) {
+    if (path.contains('/Download/')) {
+      return 'Downloads';
+    }
+    if (path.contains('/Documents/')) {
+      return 'Documents';
+    }
+    return 'Files';
+  }
+
+  Future<void> _openFolderInFiles(String folderName) async {
+    if (!Platform.isAndroid) {
+      return;
+    }
+
+    final folderUri = folderName == 'Documents'
+        ? 'content://com.android.externalstorage.documents/document/primary%3ADocuments'
+        : 'content://com.android.externalstorage.documents/document/primary%3ADownload';
+
+    try {
+      // Try opening directly in Files by Google first.
+      final filesByGoogleIntent = AndroidIntent(
+        action: 'android.intent.action.VIEW',
+        data: folderUri,
+        type: 'vnd.android.document/directory',
+        package: 'com.google.android.apps.nbu.files',
+        flags: <int>[Flag.FLAG_ACTIVITY_NEW_TASK],
+      );
+      await filesByGoogleIntent.launch();
+      return;
+    } catch (_) {
+      _showSnackBar(
+        'File saved. Could not open Files by Google automatically. Open Files by Google and check $folderName.',
+      );
+    }
+  }
+
   Future<void> _exportCSV() async {
     if (_records.isEmpty) {
-      _showSnackBar('No records to export');
+      _showSnackBar('No records found in this date range.');
+      return;
+    }
+
+    final exportableRecords = _records
+        .where((record) => record.timeIn != null || record.timeOut != null)
+        .toList();
+
+    if (exportableRecords.isEmpty) {
+      _showSnackBar('No actual time entries to export.');
+      return;
+    }
+
+    final hasPermission = await _ensureExportPermission();
+    if (!hasPermission) {
       return;
     }
 
     try {
-      final csv = await ExportService.exportToCSV(_records);
+      final csv = await ExportService.exportToCSV(exportableRecords);
       final timestamp = ExportService.generateTimestamp();
       final file =
           await ExportService.saveCSVFile(csv, 'DTR_Export_$timestamp.csv');
-      _showSnackBar('Exported to: ${file.path}');
+      final fileName = file.path.split(Platform.pathSeparator).last;
+      final folderName = _getFolderLabelFromPath(file.path);
+      _showSnackBar(
+        'CSV saved in $folderName as $fileName.',
+      );
+      await _openFolderInFiles(folderName);
     } catch (e) {
-      _showSnackBar('Export failed: $e');
+      _showSnackBar('Could not save CSV to Downloads/Documents. Please check Files permission and try again.');
     }
   }
 
   Future<void> _exportPDF() async {
     if (_records.isEmpty) {
-      _showSnackBar('No records to export');
+      _showSnackBar('No records found in this date range.');
+      return;
+    }
+
+    final exportableRecords = _records
+        .where((record) => record.timeIn != null || record.timeOut != null)
+        .toList();
+
+    if (exportableRecords.isEmpty) {
+      _showSnackBar('No actual time entries to export.');
+      return;
+    }
+
+    final hasPermission = await _ensureExportPermission();
+    if (!hasPermission) {
       return;
     }
 
     try {
-      final pdfBytes = await ExportService.exportToPDF(_records);
+      final pdfBytes = await ExportService.exportToPDF(exportableRecords);
       final timestamp = ExportService.generateTimestamp();
       final file = await ExportService.savePdfFile(
         pdfBytes,
         'DTR_Export_$timestamp.pdf',
       );
-      _showSnackBar('Exported to: ${file.path}');
+      final fileName = file.path.split(Platform.pathSeparator).last;
+      final folderName = _getFolderLabelFromPath(file.path);
+      _showSnackBar(
+        'PDF saved in $folderName as $fileName.',
+      );
+      await _openFolderInFiles(folderName);
     } catch (e) {
-      _showSnackBar('Export failed: $e');
+      _showSnackBar('Could not save PDF to Downloads/Documents. Please check Files permission and try again.');
     }
   }
 

@@ -113,17 +113,116 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final isSaturday = date.weekday == DateTime.saturday;
     final defaultTimeIn = isSaturday ? _saturdayTimeIn : _defaultShiftStart;
     final defaultTimeOut = isSaturday ? _saturdayTimeOut : _defaultShiftEnd;
+    final morningTimeIn = isSaturday
+        ? const TimeOfDay(hour: 9, minute: 0)
+        : const TimeOfDay(hour: 8, minute: 30);
+    final morningTimeOut = const TimeOfDay(hour: 12, minute: 0);
+    final afternoonTimeIn = isSaturday
+        ? const TimeOfDay(hour: 13, minute: 0)
+        : const TimeOfDay(hour: 13, minute: 30);
+    final afternoonTimeOut = isSaturday
+        ? const TimeOfDay(hour: 16, minute: 0)
+        : const TimeOfDay(hour: 17, minute: 30);
 
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (dialogContext, setDialogState) {
+            void applyPreset(TimeOfDay timeIn, TimeOfDay timeOut) {
+              setDialogState(() {
+                selectedTimeIn = timeIn;
+                selectedTimeOut = timeOut;
+              });
+            }
+
+            Future<void> editPresetTimes(
+              TimeOfDay timeIn,
+              TimeOfDay timeOut,
+            ) async {
+              applyPreset(timeIn, timeOut);
+
+              final pickedTimeIn = await showTimePicker(
+                context: dialogContext,
+                initialTime: timeIn,
+              );
+              if (pickedTimeIn != null) {
+                setDialogState(() {
+                  selectedTimeIn = pickedTimeIn;
+                });
+              }
+
+              final pickedTimeOut = await showTimePicker(
+                context: dialogContext,
+                initialTime: timeOut,
+              );
+              if (pickedTimeOut != null) {
+                setDialogState(() {
+                  selectedTimeOut = pickedTimeOut;
+                });
+              }
+            }
+
             return AlertDialog(
               title: Text('Edit ${DateFormat('MMM dd, yyyy').format(date)}${isSaturday ? ' (Saturday)' : ''}'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Quick presets',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.pine.withOpacity(0.8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ActionChip(
+                        onPressed: () => editPresetTimes(morningTimeIn, morningTimeOut),
+                        avatar: const Icon(Icons.wb_sunny_outlined, size: 14, color: AppTheme.moss),
+                        label: const Text('Half Day Morning'),
+                        labelStyle: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.moss,
+                        ),
+                        backgroundColor: AppTheme.moss.withOpacity(0.10),
+                        side: BorderSide(color: AppTheme.moss.withOpacity(0.25)),
+                      ),
+                      ActionChip(
+                        onPressed: () => editPresetTimes(afternoonTimeIn, afternoonTimeOut),
+                        avatar: const Icon(Icons.nights_stay_outlined, size: 14, color: AppTheme.clay),
+                        label: const Text('Half Day Afternoon'),
+                        labelStyle: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.clay,
+                        ),
+                        backgroundColor: AppTheme.clay.withOpacity(0.10),
+                        side: BorderSide(color: AppTheme.clay.withOpacity(0.25)),
+                      ),
+                      ActionChip(
+                        onPressed: () => applyPreset(defaultTimeIn, defaultTimeOut),
+                        avatar: const Icon(Icons.access_time, size: 14, color: AppTheme.pine),
+                        label: const Text('Default Shift'),
+                        labelStyle: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.pine,
+                        ),
+                        backgroundColor: AppTheme.mist,
+                        side: BorderSide(color: AppTheme.pine.withOpacity(0.18)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     title: const Text('Time In'),

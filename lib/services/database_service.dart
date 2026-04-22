@@ -53,11 +53,13 @@ class DatabaseService {
     final dateKey = _dateKey(record.date).substring(0, 10);
     final lunchStart = await _settingsService.getLunchStart();
     final lunchEnd = await _settingsService.getLunchEnd();
+    final shiftStart = await _settingsService.getShiftStart();
     recordData['totalHours'] = _settingsService.calculateWorkedHours(
       record.timeIn,
       record.timeOut,
       lunchStart,
       lunchEnd,
+      shiftStart,
     );
 
     // Check if record for this date already exists
@@ -180,6 +182,7 @@ class DatabaseService {
   ) async {
     final lunchStart = await _settingsService.getLunchStart();
     final lunchEnd = await _settingsService.getLunchEnd();
+    final shiftStart = await _settingsService.getShiftStart();
 
     return List.generate(maps.length, (index) {
       final record = TimeRecord.fromMap(maps[index]);
@@ -188,6 +191,7 @@ class DatabaseService {
         record.timeOut,
         lunchStart,
         lunchEnd,
+        shiftStart,
       );
       return record.copyWith(totalHours: totalHours);
     });

@@ -9,6 +9,41 @@ import 'package:printing/printing.dart';
 import '../models/time_record.dart';
 
 class ExportService {
+  static Future<List<Directory>> _getPreferredExportDirectories() async {
+    if (Platform.isAndroid) {
+      final downloadDir = Directory('/storage/emulated/0/Download');
+      final documentsDir = Directory('/storage/emulated/0/Documents');
+      return [downloadDir, documentsDir];
+    }
+
+    return [await getApplicationDocumentsDirectory()];
+  }
+
+  static Future<File> _writeToPreferredLocation(
+    String fileName,
+    Future<File> Function(File file) writer,
+  ) async {
+    final directories = await _getPreferredExportDirectories();
+    Object? lastError;
+
+    for (final dir in directories) {
+      try {
+        if (!await dir.exists()) {
+          await dir.create(recursive: true);
+        }
+
+        final file = File('${dir.path}/$fileName');
+        return await writer(file);
+      } catch (e) {
+        lastError = e;
+      }
+    }
+
+    throw Exception(
+      'Unable to save file in Downloads or Documents. Please allow Files permission and try again. ($lastError)',
+    );
+  }
+
   // Export records to CSV format
   static Future<String> exportToCSV(List<TimeRecord> records) async {
     final List<List<String>> csvData = [
@@ -33,9 +68,10 @@ class ExportService {
 
   // Save CSV to file
   static Future<File> saveCSVFile(String csv, String fileName) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/$fileName');
-    return file.writeAsString(csv);
+    return _writeToPreferredLocation(
+      fileName,
+      (file) => file.writeAsString(csv),
+    );
   }
 
   // Export records to PDF format with pagination
@@ -107,9 +143,10 @@ class ExportService {
 
   // Save PDF to file
   static Future<File> savePdfFile(Uint8List pdfBytes, String fileName) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/$fileName');
-    return file.writeAsBytes(pdfBytes);
+    return _writeToPreferredLocation(
+      fileName,
+      (file) => file.writeAsBytes(pdfBytes),
+    );
   }
 
   // Generate timestamp for file naming

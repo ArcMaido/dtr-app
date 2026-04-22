@@ -7,9 +7,14 @@ allprojects {
 
 subprojects {
     // Some third-party Android modules still compile with source/target 8.
-    // Suppress only the obsolete-options warning to keep build output clean.
+    // Suppress noisy lint warnings from third-party Java sources during builds.
     tasks.withType<JavaCompile>().configureEach {
-        options.compilerArgs.add("-Xlint:-options")
+        options.compilerArgs.addAll(
+            listOf(
+                "-Xlint:-options",
+                "-Xlint:-unchecked",
+            ),
+        )
     }
 }
 
