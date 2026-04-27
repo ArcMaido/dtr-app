@@ -110,23 +110,27 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _recordTimeIn() async {
     final todayRecord = await _ensureTodayRecord();
     final today = DateTime.now();
-    final fixedTimeIn = DateTime(
+    final shiftStartToday = DateTime(
       today.year,
       today.month,
       today.day,
       _regularTimeIn.hour,
       _regularTimeIn.minute,
     );
-    final updated = todayRecord.copyWith(timeIn: fixedTimeIn);
+
+    // Before or at 8:30 AM, clamp to 8:30 AM. After 8:30 AM, use current time.
+    final stampedTimeIn = today.isAfter(shiftStartToday) ? today : shiftStartToday;
+
+    final updated = todayRecord.copyWith(timeIn: stampedTimeIn);
     await _dbService.saveTimeRecord(updated);
     await _loadTodayRecord();
-    _showSnackBar('Time In set: ${DateFormat('hh:mm a').format(fixedTimeIn)}');
+    _showSnackBar('Time In set: ${DateFormat('hh:mm a').format(stampedTimeIn)}');
   }
 
   Future<void> _recordTimeOut() async {
     final todayRecord = await _ensureTodayRecord();
     final today = DateTime.now();
-    final fixedTimeOut = DateTime(
+    final shiftEndToday = DateTime(
       today.year,
       today.month,
       today.day,
@@ -134,16 +138,19 @@ class _HomeScreenState extends State<HomeScreen> {
       _regularTimeOut.minute,
     );
 
-    if (todayRecord.timeIn != null && !fixedTimeOut.isAfter(todayRecord.timeIn!)) {
+    // Before 5:30 PM, use current time. At or after 5:30 PM, clamp to 5:30 PM.
+    final stampedTimeOut = today.isBefore(shiftEndToday) ? today : shiftEndToday;
+
+    if (todayRecord.timeIn != null && !stampedTimeOut.isAfter(todayRecord.timeIn!)) {
       _showSnackBar('Time Out must be after Time In');
       return;
     }
 
-    final updated = todayRecord.copyWith(timeOut: fixedTimeOut);
+    final updated = todayRecord.copyWith(timeOut: stampedTimeOut);
     await _dbService.saveTimeRecord(updated);
     await _loadTodayRecord();
     _showSnackBar(
-        'Time Out set: ${DateFormat('hh:mm a').format(fixedTimeOut)}');
+        'Time Out set: ${DateFormat('hh:mm a').format(stampedTimeOut)}');
   }
 
   Future<void> _applyHalfDayMorning() async {
@@ -874,24 +881,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             backgroundColor: AppTheme.mist,
                             side: BorderSide(
                               color: AppTheme.pine.withOpacity(0.18),
-                            ),
-                          ),
-                          ActionChip(
-                            onPressed: _applyDefaultShift,
-                            avatar: const Icon(
-                              Icons.access_time,
-                              size: 14,
-                              color: Color(0xFF4CAF50),
-                            ),
-                            label: const Text('Apply Default'),
-                            labelStyle: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF4CAF50),
-                            ),
-                            backgroundColor: const Color(0xFF4CAF50).withOpacity(0.10),
-                            side: BorderSide(
-                              color: const Color(0xFF4CAF50).withOpacity(0.25),
                             ),
                           ),
                         ],

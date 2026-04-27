@@ -49,11 +49,12 @@ class _ExportScreenState extends State<ExportScreen> {
     final earliestRecordedDate = await _dbService.getEarliestRecordedDate();
 
     DateTime start = _dateOnly(_startDate);
-    DateTime end = _dateOnly(_endDate);
+    DateTime end = _dateOnly(DateTime.now());
 
     if (savedStart != null && savedEnd != null) {
       start = _dateOnly(DateTime.parse(savedStart));
-      end = _dateOnly(DateTime.parse(savedEnd));
+      // End date always follows the current day so latest Time In/Out is included.
+      end = _dateOnly(DateTime.now());
     } else {
       // First time opening Export: default start date to earliest actual entry.
       if (earliestRecordedDate != null) {
