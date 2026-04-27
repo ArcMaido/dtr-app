@@ -42,6 +42,8 @@ lib/
 
 ## Getting Started
 
+For a simple step-by-step setup guide with download links and commands, see [USER_GUIDE.md](USER_GUIDE.md).
+
 ### Prerequisites
 
 - Flutter SDK (3.0.0 or higher)

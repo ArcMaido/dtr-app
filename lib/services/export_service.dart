@@ -7,6 +7,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../models/time_record.dart';
+import '../theme/app_theme.dart';
 
 class ExportService {
   static Future<List<Directory>> _getPreferredExportDirectories() async {
@@ -46,7 +47,22 @@ class ExportService {
 
   // Export records to CSV format
   static Future<String> exportToCSV(List<TimeRecord> records) async {
+    final totalHours = records.fold<double>(
+      0,
+      (sum, record) => sum + (record.totalHours ?? 0),
+    );
+    final generatedAt = DateFormat('MMM dd, yyyy hh:mm a').format(DateTime.now());
+
     final List<List<String>> csvData = [
+      ['DAILY TIME RECORD EXPORT'],
+      [''],
+      ['Report Summary'],
+      ['Records Found', records.length.toString()],
+      ['Rendered Hours', totalHours.toStringAsFixed(2)],
+      ['Generated', generatedAt],
+      [''],
+      ['Time Entries'],
+      [],
       ['Date', 'Time In', 'Time Out', 'Total Hours'],
     ];
 
@@ -62,6 +78,11 @@ class ExportService {
         (record.totalHours ?? 0).toStringAsFixed(2),
       ]);
     }
+
+    csvData.addAll([
+      [],
+      ['Prepared by DTR App'],
+    ]);
 
     return const ListToCsvConverter(eol: '\n').convert(csvData);
   }
@@ -81,6 +102,13 @@ class ExportService {
     final totalPages = (records.length / recordsPerPage).ceil();
     final regularFont = await PdfGoogleFonts.notoSansRegular();
     final boldFont = await PdfGoogleFonts.notoSansBold();
+    final totalHours = records.fold<double>(
+      0,
+      (sum, record) => sum + (record.totalHours ?? 0),
+    );
+    final dateRangeText = records.isEmpty
+        ? 'No records selected'
+        : '${DateFormat('MMM dd, yyyy').format(records.last.date)} - ${DateFormat('MMM dd, yyyy').format(records.first.date)}';
 
     for (int pageNum = 0; pageNum < totalPages; pageNum++) {
       final startIdx = pageNum * recordsPerPage;
@@ -93,20 +121,72 @@ class ExportService {
         pw.MultiPage(
           pageFormat: PdfPageFormat.a4,
           build: (context) => [
-            pw.Text(
-              'Daily Time Record Export',
-              style: pw.TextStyle(
-                fontSize: 20,
-                fontWeight: pw.FontWeight.bold,
-                font: boldFont,
+            pw.Container(
+              width: double.infinity,
+              padding: const pw.EdgeInsets.all(18),
+              decoration: pw.BoxDecoration(
+                color: PdfColor.fromInt(AppTheme.pine.value),
+                borderRadius: pw.BorderRadius.circular(18),
+              ),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    'Daily Time Record Export',
+                    style: pw.TextStyle(
+                      fontSize: 20,
+                      fontWeight: pw.FontWeight.bold,
+                      font: boldFont,
+                      color: PdfColors.white,
+                    ),
+                  ),
+                  pw.SizedBox(height: 6),
+                  pw.Text(
+                    'A clean snapshot of your time entries and rendered hours.',
+                    style: pw.TextStyle(
+                      fontSize: 10,
+                      font: regularFont,
+                      color: PdfColors.white,
+                    ),
+                  ),
+                  pw.SizedBox(height: 14),
+                  pw.Row(
+                    children: [
+                      _buildPdfSummaryTile(
+                        title: 'Records',
+                        value: records.length.toString(),
+                        background: PdfColor.fromInt(AppTheme.moss.value),
+                        regularFont: regularFont,
+                        boldFont: boldFont,
+                      ),
+                      pw.SizedBox(width: 10),
+                      _buildPdfSummaryTile(
+                        title: 'Rendered Hours',
+                        value: totalHours.toStringAsFixed(2),
+                        background: PdfColor.fromInt(AppTheme.clay.value),
+                        regularFont: regularFont,
+                        boldFont: boldFont,
+                      ),
+                      pw.SizedBox(width: 10),
+                      _buildPdfSummaryTile(
+                        title: 'Date Range',
+                        value: dateRangeText,
+                        background: PdfColor.fromInt(AppTheme.ink.value),
+                        regularFont: regularFont,
+                        boldFont: boldFont,
+                        flex: 2,
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            pw.SizedBox(height: 8),
+            pw.SizedBox(height: 10),
             pw.Text(
               'Page ${pageNum + 1} of $totalPages',
               style: pw.TextStyle(
                 fontSize: 10,
-                color: PdfColor.fromInt(0xFF999999),
+                color: const PdfColor.fromInt(0xFF999999),
                 font: regularFont,
               ),
             ),
@@ -116,6 +196,10 @@ class ExportService {
               headerStyle: pw.TextStyle(
                 fontWeight: pw.FontWeight.bold,
                 font: boldFont,
+                color: PdfColors.white,
+              ),
+              headerDecoration: pw.BoxDecoration(
+                color: PdfColor.fromInt(AppTheme.moss.value),
               ),
               cellStyle: pw.TextStyle(font: regularFont),
               data: pageRecords
@@ -139,6 +223,49 @@ class ExportService {
     }
 
     return pdf.save();
+  }
+
+  static pw.Widget _buildPdfSummaryTile({
+    required String title,
+    required String value,
+    required PdfColor background,
+    required pw.Font regularFont,
+    required pw.Font boldFont,
+    int flex = 1,
+  }) {
+    return pw.Expanded(
+      flex: flex,
+      child: pw.Container(
+        padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: pw.BoxDecoration(
+          color: background,
+          borderRadius: pw.BorderRadius.circular(14),
+        ),
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(
+              title,
+              style: pw.TextStyle(
+                fontSize: 9,
+                font: regularFont,
+                color: PdfColors.white,
+              ),
+            ),
+            pw.SizedBox(height: 4),
+            pw.Text(
+              value,
+              style: pw.TextStyle(
+                fontSize: 13,
+                fontWeight: pw.FontWeight.bold,
+                font: boldFont,
+                color: PdfColors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   // Save PDF to file
