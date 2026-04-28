@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/time_record.dart';
@@ -40,6 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
       TimeOfDay(hour: 16, minute: 0);
   TimeRecord? _todayRecord;
   double _totalRenderedHours = 0.0;
+  double _renderedGoalHours = WorkSettingsService.defaultRenderedGoalHours;
   TimeOfDay _lunchStart = WorkSettingsService.defaultLunchStart;
   TimeOfDay _lunchEnd = WorkSettingsService.defaultLunchEnd;
   TimeOfDay _shiftStart = WorkSettingsService.defaultShiftStart;
@@ -100,6 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final lunchEnd = await _settingsService.getLunchEnd();
     final shiftStart = await _settingsService.getShiftStart();
     final shiftEnd = await _settingsService.getShiftEnd();
+    final renderedGoalHours = await _settingsService.getRenderedGoalHours();
     if (!mounted) {
       return;
     }
@@ -108,7 +112,73 @@ class _HomeScreenState extends State<HomeScreen> {
       _lunchEnd = lunchEnd;
       _shiftStart = shiftStart;
       _shiftEnd = shiftEnd;
+      _renderedGoalHours = renderedGoalHours;
     });
+  }
+
+  Future<void> _editRenderedGoal() async {
+    double? draftGoal = _renderedGoalHours;
+
+    final updatedGoal = await showDialog<double?>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Set Rendered Goal'),
+        content: TextFormField(
+          initialValue: _renderedGoalHours.toStringAsFixed(0),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(
+            labelText: 'Goal hours',
+            hintText: 'Enter total rendered hours',
+          ),
+          autofocus: true,
+          onChanged: (value) {
+            draftGoal = double.tryParse(value.trim());
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext, draftGoal);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (updatedGoal == null || updatedGoal <= 0) {
+      return;
+    }
+
+    await _settingsService.saveRenderedGoalHours(updatedGoal);
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _renderedGoalHours = updatedGoal;
+    });
+    _showSnackBar('Rendered goal updated');
+  }
+
+  double _remainingRenderedHours() {
+    return math.max(0.0, _renderedGoalHours - _totalRenderedHours);
+  }
+
+  String _formattedRenderedTimeLeft() {
+    final remainingHours = _remainingRenderedHours();
+    if (remainingHours <= 0) {
+      return 'Goal achieved';
+    }
+
+    final remainingWholeHours = remainingHours.ceil();
+    final remainingDays = remainingWholeHours ~/ 8;
+    final remainingDayHours = remainingWholeHours % 8;
+    return '${remainingDays}d ${remainingDayHours}h remaining';
   }
 
   Future<void> _recordTimeIn() async {
@@ -607,6 +677,95 @@ class _HomeScreenState extends State<HomeScreen> {
                                 fontSize: 24,
                                 fontWeight: FontWeight.w800,
                                 color: AppTheme.clay,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: Card(
+                      color: const Color(0xFFF3FBFF),
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Expanded(
+                                  child: Text(
+                                    'Rendered Goal',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppTheme.pine,
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: _editRenderedGoal,
+                                  padding: EdgeInsets.zero,
+                                  visualDensity: VisualDensity.compact,
+                                  constraints: const BoxConstraints(
+                                    minWidth: 24,
+                                    minHeight: 24,
+                                  ),
+                                  icon: const Icon(
+                                    Icons.edit_outlined,
+                                    size: 14,
+                                    color: AppTheme.pine,
+                                  ),
+                                  tooltip: 'Edit rendered goal',
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              '${_renderedGoalHours.toStringAsFixed(0)}h',
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.clay,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Card(
+                      color: AppTheme.mist.withOpacity(0.75),
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Remaining',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.moss,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              _formattedRenderedTimeLeft(),
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.moss,
                               ),
                             ),
                           ],

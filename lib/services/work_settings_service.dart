@@ -7,11 +7,13 @@ class WorkSettingsService {
   static const _lunchEndKey = 'lunch_end_minutes';
   static const _shiftStartKey = 'shift_start_minutes';
   static const _shiftEndKey = 'shift_end_minutes';
+  static const _renderedGoalKey = 'rendered_goal_hours';
 
   static const TimeOfDay defaultLunchStart = TimeOfDay(hour: 12, minute: 0);
   static const TimeOfDay defaultLunchEnd = TimeOfDay(hour: 13, minute: 0);
   static const TimeOfDay defaultShiftStart = TimeOfDay(hour: 8, minute: 30);
   static const TimeOfDay defaultShiftEnd = TimeOfDay(hour: 17, minute: 30);
+  static const double defaultRenderedGoalHours = 160.0;
 
   factory WorkSettingsService() => _instance;
 
@@ -57,6 +59,16 @@ class WorkSettingsService {
     await prefs.setInt(_shiftEndKey, _minutesOfDay(end));
   }
 
+  Future<double> getRenderedGoalHours() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getDouble(_renderedGoalKey) ?? defaultRenderedGoalHours;
+  }
+
+  Future<void> saveRenderedGoalHours(double hours) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_renderedGoalKey, hours);
+  }
+
   double calculateWorkedHours(
     DateTime? timeIn,
     DateTime? timeOut,
@@ -77,8 +89,9 @@ class WorkSettingsService {
         timeIn.isBefore(lunchStartDate) && timeOut.isAfter(lunchEndDate);
 
     // For whole-day logs, early time-ins are counted from shift start.
-    final effectiveTimeIn =
-        spansLunchWindow && timeIn.isBefore(shiftStartDate) ? shiftStartDate : timeIn;
+    final effectiveTimeIn = spansLunchWindow && timeIn.isBefore(shiftStartDate)
+        ? shiftStartDate
+        : timeIn;
 
     if (!timeOut.isAfter(effectiveTimeIn)) {
       return 0.0;

@@ -24,6 +24,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   static const Color _fullDayColor = Color(0xFFD9EBE1);
   static const Color _halfDayColor = Color(0xFFDDEFF8);
+  static const Color _saturdayFullDayColor = Color(0xFFDDE7F6);
+  static const Color _saturdayHalfDayColor = Color(0xFFF2E3D6);
   static const Color _incompleteColor = Color(0xFFFBE2D3);
   static const double _fullDayThreshold = 7.5;
 
@@ -94,38 +96,46 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return timeOfDay == null ? 'Not set' : timeOfDay.format(context);
   }
 
-  Color _dayFillColor(TimeRecord? record) {
+  Color _dayFillColor(DateTime date, TimeRecord? record) {
     if (record == null) {
       return Colors.white.withOpacity(0.9);
     }
 
     final totalHours = record.totalHours ?? 0.0;
+    final isSaturday = date.weekday == DateTime.saturday;
+
     if (record.timeOut == null) {
       return _incompleteColor;
     }
 
     if (totalHours >= _fullDayThreshold) {
-      return _fullDayColor;
+      return isSaturday ? _saturdayFullDayColor : _fullDayColor;
     }
 
-    return _halfDayColor;
+    return isSaturday ? _saturdayHalfDayColor : _halfDayColor;
   }
 
-  Color _dayAccentColor(TimeRecord? record) {
+  Color _dayAccentColor(DateTime date, TimeRecord? record) {
     if (record == null) {
       return Colors.transparent;
     }
 
     final totalHours = record.totalHours ?? 0.0;
+    final isSaturday = date.weekday == DateTime.saturday;
+
     if (record.timeOut == null) {
       return AppTheme.clay.withOpacity(0.55);
     }
 
     if (totalHours >= _fullDayThreshold) {
-      return AppTheme.moss.withOpacity(0.70);
+      return isSaturday
+          ? AppTheme.pine.withOpacity(0.45)
+          : AppTheme.moss.withOpacity(0.70);
     }
 
-    return AppTheme.clay.withOpacity(0.70);
+    return isSaturday
+        ? AppTheme.moss.withOpacity(0.45)
+        : AppTheme.clay.withOpacity(0.70);
   }
 
   Widget _buildCalendarLegend() {
@@ -654,8 +664,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
         date.year == DateTime.now().year;
 
     final hasRecord = record != null;
-    final fillColor = _dayFillColor(record);
-    final accentColor = _dayAccentColor(record);
+    final fillColor = _dayFillColor(date, record);
+    final accentColor = _dayAccentColor(date, record);
 
     return GestureDetector(
       onTap: () => _showDayDetails(date, record),
