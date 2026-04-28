@@ -30,10 +30,14 @@ class _HomeScreenState extends State<HomeScreen> {
   // Saturday times
   static const TimeOfDay _saturdayTimeIn = TimeOfDay(hour: 9, minute: 0);
   static const TimeOfDay _saturdayTimeOut = TimeOfDay(hour: 16, minute: 0);
-  static const TimeOfDay _saturdayHalfDayMorningIn = TimeOfDay(hour: 9, minute: 0);
-  static const TimeOfDay _saturdayHalfDayMorningOut = TimeOfDay(hour: 12, minute: 0);
-  static const TimeOfDay _saturdayHalfDayAfternoonIn = TimeOfDay(hour: 13, minute: 0);
-  static const TimeOfDay _saturdayHalfDayAfternoonOut = TimeOfDay(hour: 16, minute: 0);
+  static const TimeOfDay _saturdayHalfDayMorningIn =
+      TimeOfDay(hour: 9, minute: 0);
+  static const TimeOfDay _saturdayHalfDayMorningOut =
+      TimeOfDay(hour: 12, minute: 0);
+  static const TimeOfDay _saturdayHalfDayAfternoonIn =
+      TimeOfDay(hour: 13, minute: 0);
+  static const TimeOfDay _saturdayHalfDayAfternoonOut =
+      TimeOfDay(hour: 16, minute: 0);
   TimeRecord? _todayRecord;
   double _totalRenderedHours = 0.0;
   TimeOfDay _lunchStart = WorkSettingsService.defaultLunchStart;
@@ -119,12 +123,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     // Before or at 8:30 AM, clamp to 8:30 AM. After 8:30 AM, use current time.
-    final stampedTimeIn = today.isAfter(shiftStartToday) ? today : shiftStartToday;
+    final stampedTimeIn =
+        today.isAfter(shiftStartToday) ? today : shiftStartToday;
 
     final updated = todayRecord.copyWith(timeIn: stampedTimeIn);
     await _dbService.saveTimeRecord(updated);
     await _loadTodayRecord();
-    _showSnackBar('Time In set: ${DateFormat('hh:mm a').format(stampedTimeIn)}');
+    _showSnackBar(
+        'Time In set: ${DateFormat('hh:mm a').format(stampedTimeIn)}');
   }
 
   Future<void> _recordTimeOut() async {
@@ -139,9 +145,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     // Before 5:30 PM, use current time. At or after 5:30 PM, clamp to 5:30 PM.
-    final stampedTimeOut = today.isBefore(shiftEndToday) ? today : shiftEndToday;
+    final stampedTimeOut =
+        today.isBefore(shiftEndToday) ? today : shiftEndToday;
 
-    if (todayRecord.timeIn != null && !stampedTimeOut.isAfter(todayRecord.timeIn!)) {
+    if (todayRecord.timeIn != null &&
+        !stampedTimeOut.isAfter(todayRecord.timeIn!)) {
       _showSnackBar('Time Out must be after Time In');
       return;
     }
@@ -157,10 +165,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final todayRecord = await _ensureTodayRecord();
     final today = DateTime.now();
     final isSaturday = today.weekday == DateTime.saturday;
-    
+
     final morning = isSaturday ? _saturdayHalfDayMorningIn : _halfDayMorningIn;
-    final morningOut = isSaturday ? _saturdayHalfDayMorningOut : _halfDayMorningOut;
-    
+    final morningOut =
+        isSaturday ? _saturdayHalfDayMorningOut : _halfDayMorningOut;
+
     final timeIn = DateTime(
       today.year,
       today.month,
@@ -185,10 +194,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final todayRecord = await _ensureTodayRecord();
     final today = DateTime.now();
     final isSaturday = today.weekday == DateTime.saturday;
-    
-    final afternoon = isSaturday ? _saturdayHalfDayAfternoonIn : _halfDayAfternoonIn;
-    final afternoonOut = isSaturday ? _saturdayHalfDayAfternoonOut : _halfDayAfternoonOut;
-    
+
+    final afternoon =
+        isSaturday ? _saturdayHalfDayAfternoonIn : _halfDayAfternoonIn;
+    final afternoonOut =
+        isSaturday ? _saturdayHalfDayAfternoonOut : _halfDayAfternoonOut;
+
     final timeIn = DateTime(
       today.year,
       today.month,
@@ -213,10 +224,10 @@ class _HomeScreenState extends State<HomeScreen> {
     final todayRecord = await _ensureTodayRecord();
     final today = DateTime.now();
     final isSaturday = today.weekday == DateTime.saturday;
-    
+
     final defaultIn = isSaturday ? _saturdayTimeIn : _regularTimeIn;
     final defaultOut = isSaturday ? _saturdayTimeOut : _regularTimeOut;
-    
+
     final timeIn = DateTime(
       today.year,
       today.month,
@@ -693,7 +704,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 4),
                       const Text(
-                        'Quick tap for default schedule, or use custom edit.',
+                        'Quick tap for default schedule. Tap Time In or Time Out to customize.',
                         style: TextStyle(
                           fontSize: 12,
                           color: AppTheme.moss,
@@ -703,83 +714,105 @@ class _HomeScreenState extends State<HomeScreen> {
                       Row(
                         children: [
                           Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: AppTheme.moss.withOpacity(0.10),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: _editTodayTimes,
                                 borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: AppTheme.moss.withOpacity(0.25),
-                                ),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Row(
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.moss.withOpacity(0.10),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: AppTheme.moss.withOpacity(0.25),
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Icon(Icons.login, size: 15, color: AppTheme.moss),
-                                      SizedBox(width: 6),
+                                      const Row(
+                                        children: [
+                                          Icon(Icons.login,
+                                              size: 15, color: AppTheme.moss),
+                                          SizedBox(width: 6),
+                                          Text(
+                                            'Time In',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppTheme.moss,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
                                       Text(
-                                        'Time In',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppTheme.moss,
+                                        _todayRecord?.formatTime(
+                                                _todayRecord?.timeIn) ??
+                                            '--:--',
+                                        style: const TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppTheme.pine,
                                         ),
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    _todayRecord?.formatTime(_todayRecord?.timeIn) ?? '--:--',
-                                    style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppTheme.pine,
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                             ),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: AppTheme.clay.withOpacity(0.10),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: _editTodayTimes,
                                 borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: AppTheme.clay.withOpacity(0.25),
-                                ),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Row(
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.clay.withOpacity(0.10),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: AppTheme.clay.withOpacity(0.25),
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Icon(Icons.logout, size: 15, color: AppTheme.clay),
-                                      SizedBox(width: 6),
+                                      const Row(
+                                        children: [
+                                          Icon(Icons.logout,
+                                              size: 15, color: AppTheme.clay),
+                                          SizedBox(width: 6),
+                                          Text(
+                                            'Time Out',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppTheme.clay,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
                                       Text(
-                                        'Time Out',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppTheme.clay,
+                                        _todayRecord?.formatTime(
+                                                _todayRecord?.timeOut) ??
+                                            '--:--',
+                                        style: const TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppTheme.pine,
                                         ),
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    _todayRecord?.formatTime(_todayRecord?.timeOut) ?? '--:--',
-                                    style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppTheme.pine,
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                             ),
                           ),
@@ -796,7 +829,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               style: FilledButton.styleFrom(
                                 backgroundColor: AppTheme.moss,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
                               ),
                             ),
                           ),
@@ -809,7 +843,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               style: FilledButton.styleFrom(
                                 backgroundColor: AppTheme.clay,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
                               ),
                             ),
                           ),
@@ -865,24 +900,6 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: AppTheme.clay.withOpacity(0.25),
                             ),
                           ),
-                          ActionChip(
-                            onPressed: _editTodayTimes,
-                            avatar: const Icon(
-                              Icons.edit_calendar_outlined,
-                              size: 14,
-                              color: AppTheme.pine,
-                            ),
-                            label: const Text('Custom'),
-                            labelStyle: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.pine,
-                            ),
-                            backgroundColor: AppTheme.mist,
-                            side: BorderSide(
-                              color: AppTheme.pine.withOpacity(0.18),
-                            ),
-                          ),
                         ],
                       ),
                     ],
@@ -920,5 +937,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
 }
