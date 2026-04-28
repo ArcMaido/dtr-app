@@ -22,6 +22,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
   TimeOfDay _defaultShiftStart = WorkSettingsService.defaultShiftStart;
   TimeOfDay _defaultShiftEnd = WorkSettingsService.defaultShiftEnd;
 
+  static const Color _fullDayColor = Color(0xFFD9EBE1);
+  static const Color _halfDayColor = Color(0xFFDDEFF8);
+  static const Color _incompleteColor = Color(0xFFFBE2D3);
+  static const double _fullDayThreshold = 7.5;
+
   // Saturday special times
   static const TimeOfDay _saturdayTimeIn = TimeOfDay(hour: 9, minute: 0);
   static const TimeOfDay _saturdayTimeOut = TimeOfDay(hour: 16, minute: 0);
@@ -89,6 +94,78 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return timeOfDay == null ? 'Not set' : timeOfDay.format(context);
   }
 
+  Color _dayFillColor(TimeRecord? record) {
+    if (record == null) {
+      return Colors.white.withOpacity(0.9);
+    }
+
+    final totalHours = record.totalHours ?? 0.0;
+    if (record.timeOut == null) {
+      return _incompleteColor;
+    }
+
+    if (totalHours >= _fullDayThreshold) {
+      return _fullDayColor;
+    }
+
+    return _halfDayColor;
+  }
+
+  Color _dayAccentColor(TimeRecord? record) {
+    if (record == null) {
+      return Colors.transparent;
+    }
+
+    final totalHours = record.totalHours ?? 0.0;
+    if (record.timeOut == null) {
+      return AppTheme.clay.withOpacity(0.55);
+    }
+
+    if (totalHours >= _fullDayThreshold) {
+      return AppTheme.moss.withOpacity(0.70);
+    }
+
+    return AppTheme.clay.withOpacity(0.70);
+  }
+
+  Widget _buildCalendarLegend() {
+    Widget legendItem(Color color, String label) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.moss,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          legendItem(_fullDayColor, 'Full day'),
+          const SizedBox(width: 14),
+          legendItem(_halfDayColor, 'Half day'),
+        ],
+      ),
+    );
+  }
+
   DateTime? _combineDateAndTime(DateTime date, TimeOfDay? timeOfDay) {
     if (timeOfDay == null) {
       return null;
@@ -116,7 +193,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final morningTimeIn = isSaturday
         ? const TimeOfDay(hour: 9, minute: 0)
         : const TimeOfDay(hour: 8, minute: 30);
-    final morningTimeOut = const TimeOfDay(hour: 12, minute: 0);
+    const morningTimeOut = TimeOfDay(hour: 12, minute: 0);
     final afternoonTimeIn = isSaturday
         ? const TimeOfDay(hour: 13, minute: 0)
         : const TimeOfDay(hour: 13, minute: 30);
@@ -164,7 +241,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
             }
 
             return AlertDialog(
-              title: Text('Edit ${DateFormat('MMM dd, yyyy').format(date)}${isSaturday ? ' (Saturday)' : ''}'),
+              title: Text(
+                  'Edit ${DateFormat('MMM dd, yyyy').format(date)}${isSaturday ? ' (Saturday)' : ''}'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -185,8 +263,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     runSpacing: 8,
                     children: [
                       ActionChip(
-                        onPressed: () => editPresetTimes(morningTimeIn, morningTimeOut),
-                        avatar: const Icon(Icons.wb_sunny_outlined, size: 14, color: AppTheme.moss),
+                        onPressed: () =>
+                            editPresetTimes(morningTimeIn, morningTimeOut),
+                        avatar: const Icon(Icons.wb_sunny_outlined,
+                            size: 14, color: AppTheme.moss),
                         label: const Text('Half Day Morning'),
                         labelStyle: const TextStyle(
                           fontSize: 12,
@@ -194,11 +274,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           color: AppTheme.moss,
                         ),
                         backgroundColor: AppTheme.moss.withOpacity(0.10),
-                        side: BorderSide(color: AppTheme.moss.withOpacity(0.25)),
+                        side:
+                            BorderSide(color: AppTheme.moss.withOpacity(0.25)),
                       ),
                       ActionChip(
-                        onPressed: () => editPresetTimes(afternoonTimeIn, afternoonTimeOut),
-                        avatar: const Icon(Icons.nights_stay_outlined, size: 14, color: AppTheme.clay),
+                        onPressed: () =>
+                            editPresetTimes(afternoonTimeIn, afternoonTimeOut),
+                        avatar: const Icon(Icons.nights_stay_outlined,
+                            size: 14, color: AppTheme.clay),
                         label: const Text('Half Day Afternoon'),
                         labelStyle: const TextStyle(
                           fontSize: 12,
@@ -206,11 +289,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           color: AppTheme.clay,
                         ),
                         backgroundColor: AppTheme.clay.withOpacity(0.10),
-                        side: BorderSide(color: AppTheme.clay.withOpacity(0.25)),
+                        side:
+                            BorderSide(color: AppTheme.clay.withOpacity(0.25)),
                       ),
                       ActionChip(
-                        onPressed: () => applyPreset(defaultTimeIn, defaultTimeOut),
-                        avatar: const Icon(Icons.access_time, size: 14, color: AppTheme.pine),
+                        onPressed: () =>
+                            applyPreset(defaultTimeIn, defaultTimeOut),
+                        avatar: const Icon(Icons.access_time,
+                            size: 14, color: AppTheme.pine),
                         label: const Text('Default Shift'),
                         labelStyle: const TextStyle(
                           fontSize: 12,
@@ -218,7 +304,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           color: AppTheme.pine,
                         ),
                         backgroundColor: AppTheme.mist,
-                        side: BorderSide(color: AppTheme.pine.withOpacity(0.18)),
+                        side:
+                            BorderSide(color: AppTheme.pine.withOpacity(0.18)),
                       ),
                     ],
                   ),
@@ -401,6 +488,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ),
               const SizedBox(height: 14),
 
+              _buildCalendarLegend(),
+
               Row(
                 children: [
                   Expanded(
@@ -411,7 +500,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Worked Hours',
+                              'Monthly Worked Hours',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
@@ -442,7 +531,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Rendered Hours',
+                              'Total Hours',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
@@ -565,7 +654,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
         date.year == DateTime.now().year;
 
     final hasRecord = record != null;
-    final hasTimeOut = record?.timeOut != null;
+    final fillColor = _dayFillColor(record);
+    final accentColor = _dayAccentColor(record);
 
     return GestureDetector(
       onTap: () => _showDayDetails(date, record),
@@ -576,30 +666,47 @@ class _CalendarScreenState extends State<CalendarScreen> {
             width: isToday ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(8),
-          color: hasRecord
-              ? hasTimeOut
-                  ? const Color(0xFFD9EBE1)
-                  : const Color(0xFFFBE2D3)
-              : Colors.white.withOpacity(0.9),
+          color: fillColor,
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
           children: [
-            Text(
-              '${date.day}',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: isToday ? AppTheme.clay : AppTheme.ink,
-              ),
-            ),
-            if (record != null)
-              Text(
-                '${record.totalHours?.toStringAsFixed(1) ?? '0'}h',
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: AppTheme.moss,
+            if (hasRecord)
+              Positioned(
+                left: 0,
+                right: 0,
+                top: 0,
+                child: Container(
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: accentColor,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(8),
+                    ),
+                  ),
                 ),
               ),
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '${date.day}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isToday ? AppTheme.clay : AppTheme.ink,
+                    ),
+                  ),
+                  if (record != null)
+                    Text(
+                      '${record.totalHours?.toStringAsFixed(1) ?? '0'}h',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: AppTheme.moss,
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -633,7 +740,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               Navigator.pop(dialogContext);
               _editDayRecord(date, record);
             },
-            child: const Text('Edit Times'),
+            child: Text(record == null ? 'Add Time' : 'Edit Times'),
           ),
           if (record?.id != null)
             TextButton(

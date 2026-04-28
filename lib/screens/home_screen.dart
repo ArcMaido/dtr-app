@@ -593,7 +593,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Rendered Hours',
+                              'Total Rendered Hours',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
