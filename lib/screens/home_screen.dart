@@ -9,6 +9,7 @@ import '../theme/app_theme.dart';
 import '../utils/navigation_utils.dart';
 import 'calendar_screen.dart';
 import 'export_screen.dart';
+import 'about_screen.dart';
 import '../widgets/app_bottom_navigation.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -631,13 +632,23 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Worked Hours',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.moss,
-                              ),
+                            const Row(
+                              children: [
+                                Icon(
+                                  Icons.timelapse,
+                                  size: 14,
+                                  color: AppTheme.moss,
+                                ),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Worked Hours',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.moss,
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 6),
                             Text(
@@ -662,13 +673,23 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Total Rendered Hours',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.clay,
-                              ),
+                            const Row(
+                              children: [
+                                Icon(
+                                  Icons.av_timer,
+                                  size: 14,
+                                  color: AppTheme.clay,
+                                ),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Total Rendered Hours',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.clay,
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 6),
                             Text(
@@ -699,6 +720,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Row(
                               children: [
+                                const Icon(
+                                  Icons.flag_outlined,
+                                  size: 14,
+                                  color: AppTheme.pine,
+                                ),
+                                const SizedBox(width: 6),
                                 const Expanded(
                                   child: Text(
                                     'Rendered Goal',
@@ -751,13 +778,23 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Remaining',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.moss,
-                              ),
+                            const Row(
+                              children: [
+                                Icon(
+                                  Icons.hourglass_bottom,
+                                  size: 14,
+                                  color: AppTheme.moss,
+                                ),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Remaining',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.moss,
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 6),
                             Text(
@@ -787,12 +824,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Global Shift Time',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          const Row(
+                            children: [
+                              Icon(Icons.schedule, size: 16),
+                              SizedBox(width: 6),
+                              Text(
+                                'Global Shift Time',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 6),
                           Text(
@@ -822,12 +865,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Excluded Time',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          const Row(
+                            children: [
+                              Icon(Icons.remove_circle_outline, size: 16),
+                              SizedBox(width: 6),
+                              Text(
+                                'Excluded Time',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 6),
                           Text(
@@ -1091,6 +1140,11 @@ class _HomeScreenState extends State<HomeScreen> {
               return;
             }
             await _loadTodayRecord();
+          } else if (index == 3) {
+            await Navigator.pushReplacement(
+              context,
+              NavigationUtils.noAnimationRoute(const AboutScreen()),
+            );
           }
         },
       ),

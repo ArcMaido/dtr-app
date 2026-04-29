@@ -8,6 +8,7 @@ import '../utils/navigation_utils.dart';
 import '../widgets/app_bottom_navigation.dart';
 import 'home_screen.dart';
 import 'export_screen.dart';
+import 'about_screen.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -651,6 +652,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
             await Navigator.pushReplacement(
               context,
               NavigationUtils.noAnimationRoute(const ExportScreen()),
+            );
+          } else if (index == 3) {
+            await Navigator.pushReplacement(
+              context,
+              NavigationUtils.noAnimationRoute(const AboutScreen()),
             );
           }
         },

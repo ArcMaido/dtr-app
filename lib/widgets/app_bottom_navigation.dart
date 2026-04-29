@@ -32,6 +32,11 @@ class AppBottomNavigation extends StatelessWidget {
           selectedIcon: Icon(Icons.ios_share_rounded),
           label: 'Export',
         ),
+        NavigationDestination(
+          icon: Icon(Icons.info_outline),
+          selectedIcon: Icon(Icons.info),
+          label: 'About',
+        ),
       ],
     );
   }

@@ -13,6 +13,7 @@ import '../utils/navigation_utils.dart';
 import '../widgets/app_bottom_navigation.dart';
 import 'calendar_screen.dart';
 import 'home_screen.dart';
+import 'about_screen.dart';
 
 class ExportScreen extends StatefulWidget {
   const ExportScreen({super.key});
@@ -740,6 +741,11 @@ class _ExportScreenState extends State<ExportScreen> {
             await Navigator.pushReplacement(
               context,
               NavigationUtils.noAnimationRoute(const CalendarScreen()),
+            );
+          } else if (index == 3) {
+            await Navigator.pushReplacement(
+              context,
+              NavigationUtils.noAnimationRoute(const AboutScreen()),
             );
           }
         },
