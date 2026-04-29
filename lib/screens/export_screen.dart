@@ -446,13 +446,23 @@ class _ExportScreenState extends State<ExportScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    'Records Found',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFFEAF5FF),
-                                    ),
+                                  const Row(
+                                    children: [
+                                      Icon(
+                                        Icons.find_in_page_outlined,
+                                        size: 14,
+                                        color: Color(0xFFEAF5FF),
+                                      ),
+                                      SizedBox(width: 6),
+                                      Text(
+                                        'Records Found',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFFEAF5FF),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
@@ -471,13 +481,23 @@ class _ExportScreenState extends State<ExportScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    'Rendered Hours',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFFEAF5FF),
-                                    ),
+                                  const Row(
+                                    children: [
+                                      Icon(
+                                        Icons.av_timer,
+                                        size: 14,
+                                        color: Color(0xFFEAF5FF),
+                                      ),
+                                      SizedBox(width: 6),
+                                      Text(
+                                        'Rendered Hours',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFFEAF5FF),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
@@ -516,12 +536,22 @@ class _ExportScreenState extends State<ExportScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Start Date',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
+                              const Row(
+                                children: [
+                                  Icon(
+                                    Icons.event_available_outlined,
+                                    size: 14,
+                                    color: Colors.grey,
+                                  ),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'Start Date',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 4),
                               Text(
@@ -547,12 +577,22 @@ class _ExportScreenState extends State<ExportScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'End Date',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
+                              const Row(
+                                children: [
+                                  Icon(
+                                    Icons.event_busy_outlined,
+                                    size: 14,
+                                    color: Colors.grey,
+                                  ),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'End Date',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 4),
                               Text(

@@ -190,7 +190,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
+  bool _isFutureDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(date.year, date.month, date.day);
+    return target.isAfter(today);
+  }
+
   Future<void> _editDayRecord(DateTime date, TimeRecord? record) async {
+    if (_isFutureDate(date)) {
+      _showSnackBar('Time entries are only allowed for today or past dates');
+      return;
+    }
+
     TimeOfDay? selectedTimeIn =
         record?.timeIn != null ? _timeOfDayFromDateTime(record!.timeIn!) : null;
     TimeOfDay? selectedTimeOut = record?.timeOut != null
@@ -813,6 +825,58 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   void _showDayDetails(DateTime date, TimeRecord? record) {
     final hasNotes = record?.notes?.trim().isNotEmpty == true;
+    final hasTimeValue = record?.timeIn != null || record?.timeOut != null;
+    final isFutureDate = _isFutureDate(date);
+
+    Widget buildTimeMetric({
+      required IconData icon,
+      required String label,
+      required String value,
+      required Color color,
+    }) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.10),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.22)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.16),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, size: 16, color: color),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.moss,
+                ),
+              ),
+            ),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.pine,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -830,12 +894,38 @@ class _CalendarScreenState extends State<CalendarScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (record != null) ...[
-              Text('Time In: ${record.formatTime(record.timeIn)}'),
-              const SizedBox(height: 8),
-              Text('Time Out: ${record.formatTime(record.timeOut)}'),
-              const SizedBox(height: 8),
-              Text(
-                'Total Hours: ${(record.totalHours ?? 0).toStringAsFixed(2)}',
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppTheme.pine.withOpacity(0.12)),
+                ),
+                child: Column(
+                  children: [
+                    buildTimeMetric(
+                      icon: Icons.login_outlined,
+                      label: 'Time In',
+                      value: record.formatTime(record.timeIn),
+                      color: AppTheme.moss,
+                    ),
+                    const SizedBox(height: 8),
+                    buildTimeMetric(
+                      icon: Icons.logout_outlined,
+                      label: 'Time Out',
+                      value: record.formatTime(record.timeOut),
+                      color: AppTheme.clay,
+                    ),
+                    const SizedBox(height: 8),
+                    buildTimeMetric(
+                      icon: Icons.timelapse_outlined,
+                      label: 'Total Hours',
+                      value: '${(record.totalHours ?? 0).toStringAsFixed(2)}h',
+                      color: AppTheme.pine,
+                    ),
+                  ],
+                ),
               ),
             ] else
               Container(
@@ -851,6 +941,26 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   style: TextStyle(fontSize: 12, color: AppTheme.moss),
                 ),
               ),
+            if (isFutureDate) ...[
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppTheme.clay.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppTheme.clay.withOpacity(0.25)),
+                ),
+                child: const Text(
+                  'Future dates are notes-only. Time entries can only be set for today or past dates.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.clay,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 14),
             Container(
               width: double.infinity,
@@ -938,23 +1048,26 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     ),
                   ),
                 ),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(dialogContext);
-                    _editDayRecord(date, record);
-                  },
-                  icon: const Icon(Icons.access_time),
-                  label: const Text('Edit Times'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppTheme.clay,
-                    side: const BorderSide(color: AppTheme.clay),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
+                if (!isFutureDate)
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(dialogContext);
+                      _editDayRecord(date, record);
+                    },
+                    icon: Icon(
+                      hasTimeValue ? Icons.access_time : Icons.add_alarm,
+                    ),
+                    label: Text(hasTimeValue ? 'Edit Times' : 'Add Time'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.clay,
+                      side: const BorderSide(color: AppTheme.clay),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
                     ),
                   ),
-                ),
-                if (record?.id != null)
+                if (record?.id != null && hasTimeValue)
                   OutlinedButton.icon(
                     onPressed: () async {
                       final confirmed = await showDialog<bool>(
