@@ -5,12 +5,14 @@ class TimeRecord {
   final DateTime date;
   final DateTime? timeIn;
   final DateTime? timeOut;
+  final String? notes;
   final double? totalHours;
 
   TimeRecord({
     required this.date, this.id,
     this.timeIn,
     this.timeOut,
+    this.notes,
     this.totalHours,
   });
 
@@ -29,6 +31,7 @@ class TimeRecord {
       'date': DateTime(date.year, date.month, date.day).toIso8601String(),
       'timeIn': timeIn?.toIso8601String(),
       'timeOut': timeOut?.toIso8601String(),
+      'notes': notes,
       'totalHours': calculateHours(),
     };
   }
@@ -40,6 +43,7 @@ class TimeRecord {
       date: DateTime.parse(map['date']),
       timeIn: map['timeIn'] != null ? DateTime.parse(map['timeIn']) : null,
       timeOut: map['timeOut'] != null ? DateTime.parse(map['timeOut']) : null,
+      notes: map['notes'],
       totalHours: map['totalHours'],
     );
   }
@@ -60,6 +64,7 @@ class TimeRecord {
     DateTime? date,
     DateTime? timeIn,
     DateTime? timeOut,
+    String? notes,
     double? totalHours,
   }) {
     return TimeRecord(
@@ -67,6 +72,7 @@ class TimeRecord {
       date: date ?? this.date,
       timeIn: timeIn ?? this.timeIn,
       timeOut: timeOut ?? this.timeOut,
+      notes: notes ?? this.notes,
       totalHours: totalHours ?? this.totalHours,
     );
   }

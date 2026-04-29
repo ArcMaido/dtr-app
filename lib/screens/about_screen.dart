@@ -118,6 +118,12 @@ class AboutScreen extends StatelessWidget {
                   'Use Set Time-In and Set Time-Out for quick logging. Tap Time In or Time Out cards to manually edit today\'s values when needed.',
             ),
             _guideItem(
+              icon: Icons.sticky_note_2_outlined,
+              title: 'Notes',
+              description:
+                  'Use Notes on Home or inside Calendar to record what you did, a reason for the day, or any reminder tied to that specific date.',
+            ),
+            _guideItem(
               icon: Icons.shortcut_outlined,
               title: 'Shortcuts',
               description:

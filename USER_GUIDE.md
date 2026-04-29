@@ -50,6 +50,12 @@ The app stores data locally on the device, so no extra server setup is needed. T
 - Excel gives you the designed report layout.
 - Saves the exported file to the device storage location allowed by the platform.
 
+## Notes Feature
+
+- Use the Notes shortcut on the Home page to add a reason, reminder, or summary for today.
+- Open a day in Calendar to edit notes for that specific date.
+- A note icon appears on days that already have notes saved.
+
 ## Troubleshooting
 
 - If Flutter is not recognized, restart your terminal after installing Flutter and make sure Flutter is added to your PATH.

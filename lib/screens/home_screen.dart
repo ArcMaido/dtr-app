@@ -166,6 +166,65 @@ class _HomeScreenState extends State<HomeScreen> {
     _showSnackBar('Rendered goal updated');
   }
 
+  Future<void> _editTodayNotes() async {
+    final todayRecord = await _ensureTodayRecord();
+    String noteText = todayRecord.notes ?? '';
+
+    final updatedNotes = await showDialog<String?>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Add Note'),
+        content: StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            return TextFormField(
+              initialValue: noteText,
+              autofocus: true,
+              maxLines: 4,
+              minLines: 3,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'Note for today',
+                hintText: 'Example: worked on reports, in meetings, sick leave',
+                alignLabelWithHint: true,
+              ),
+              onChanged: (value) {
+                setDialogState(() {
+                  noteText = value;
+                });
+              },
+            );
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, ''),
+            child: const Text('Clear'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, noteText),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (updatedNotes == null) {
+      return;
+    }
+
+    final normalizedNotes = updatedNotes.trim();
+    final updated = todayRecord.copyWith(
+      notes: normalizedNotes,
+    );
+    await _dbService.saveTimeRecord(updated);
+    await _loadTodayRecord();
+    _showSnackBar('Note updated');
+  }
+
   double _remainingRenderedHours() {
     return math.max(0.0, _renderedGoalHours - _totalRenderedHours);
   }
@@ -1108,7 +1167,87 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: AppTheme.clay.withOpacity(0.25),
                             ),
                           ),
+                          ActionChip(
+                            onPressed: _editTodayNotes,
+                            avatar: const Icon(
+                              Icons.sticky_note_2_outlined,
+                              size: 14,
+                              color: AppTheme.pine,
+                            ),
+                            label: const Text('Notes'),
+                            labelStyle: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.pine,
+                            ),
+                            backgroundColor: AppTheme.mist,
+                            side: BorderSide(
+                              color: AppTheme.pine.withOpacity(0.18),
+                            ),
+                          ),
                         ],
+                      ),
+                      const SizedBox(height: 12),
+                      InkWell(
+                        onTap: _editTodayNotes,
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppTheme.mist.withOpacity(0.45),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: AppTheme.pine.withOpacity(0.14),
+                            ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(
+                                Icons.sticky_note_2_outlined,
+                                size: 16,
+                                color: AppTheme.pine,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Today\'s Note',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppTheme.pine,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _todayRecord?.notes?.isNotEmpty == true
+                                          ? _todayRecord!.notes!
+                                          : 'Tap to add a reason, reminder, or summary for today.',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: _todayRecord?.notes?.isNotEmpty == true
+                                            ? AppTheme.ink
+                                            : AppTheme.moss,
+                                        height: 1.3,
+                                      ),
+                                      maxLines: 3,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Icon(
+                                Icons.edit_outlined,
+                                size: 16,
+                                color: AppTheme.clay,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),

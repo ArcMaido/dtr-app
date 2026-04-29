@@ -28,8 +28,9 @@ class DatabaseService {
     String path = join(await getDatabasesPath(), 'dtr_app.db');
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDb,
+      onUpgrade: _upgradeDb,
     );
   }
 
@@ -40,10 +41,17 @@ class DatabaseService {
         date TEXT NOT NULL,
         timeIn TEXT,
         timeOut TEXT,
+        notes TEXT,
         totalHours REAL,
         UNIQUE(date)
       )
     ''');
+  }
+
+  Future<void> _upgradeDb(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('ALTER TABLE time_records ADD COLUMN notes TEXT');
+    }
   }
 
   // Insert or update a time record

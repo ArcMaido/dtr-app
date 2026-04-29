@@ -382,6 +382,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       date: date,
                       timeIn: timeIn,
                       timeOut: timeOut,
+                      notes: record?.notes,
                     );
                     await _dbService.saveTimeRecord(updated);
                     if (!mounted) {
@@ -399,6 +400,69 @@ class _CalendarScreenState extends State<CalendarScreen> {
         );
       },
     );
+  }
+
+  Future<void> _editDayNotes(DateTime date, TimeRecord? record) async {
+    String selectedNotes = record?.notes ?? '';
+
+    final updatedNotes = await showDialog<String?>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(
+          record?.notes?.trim().isNotEmpty == true ? 'Edit Notes' : 'Add Notes',
+        ),
+        content: StatefulBuilder(
+          builder: (dialogContext, setFieldState) {
+            return TextFormField(
+              initialValue: selectedNotes,
+              autofocus: true,
+              maxLines: 4,
+              minLines: 3,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'Notes',
+                hintText: 'Write a reason, summary, or reminder for this day',
+                alignLabelWithHint: true,
+              ),
+              onChanged: (value) {
+                setFieldState(() {
+                  selectedNotes = value;
+                });
+              },
+            );
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, ''),
+            child: const Text('Clear'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, selectedNotes),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (updatedNotes == null) {
+      return;
+    }
+
+    final normalizedNotes = updatedNotes.trim();
+    final updated = (record ?? TimeRecord(date: date)).copyWith(
+      notes: normalizedNotes,
+    );
+    await _dbService.saveTimeRecord(updated);
+    if (!mounted) {
+      return;
+    }
+    await _loadMonthRecords();
+    _showSnackBar(normalizedNotes.isEmpty ? 'Notes cleared' : 'Notes saved');
   }
 
   void _previousMonth() {
@@ -670,6 +734,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         date.year == DateTime.now().year;
 
     final hasRecord = record != null;
+    final hasNotes = record?.notes?.trim().isNotEmpty == true;
     final fillColor = _dayFillColor(date, record);
     final accentColor = _dayAccentColor(date, record);
 
@@ -698,6 +763,23 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(8),
                     ),
+                  ),
+                ),
+              ),
+            if (hasNotes)
+              Positioned(
+                right: 4,
+                bottom: 4,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.8),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.sticky_note_2_outlined,
+                    size: 11,
+                    color: accentColor,
                   ),
                 ),
               ),
@@ -730,10 +812,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   void _showDayDetails(DateTime date, TimeRecord? record) {
+    final hasNotes = record?.notes?.trim().isNotEmpty == true;
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(DateFormat('MMM dd, yyyy').format(date)),
+        title: Row(
+          children: [
+            const Icon(Icons.calendar_today_outlined, size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(DateFormat('MMM dd, yyyy').format(date)),
+            ),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -747,66 +838,191 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 'Total Hours: ${(record.totalHours ?? 0).toStringAsFixed(2)}',
               ),
             ] else
-              const Text('No record for this day'),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.mist.withOpacity(0.35),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.pine.withOpacity(0.12)),
+                ),
+                child: const Text(
+                  'No time record yet. You can still add notes for this day.',
+                  style: TextStyle(fontSize: 12, color: AppTheme.moss),
+                ),
+              ),
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: hasNotes ? AppTheme.mist.withOpacity(0.35) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppTheme.pine.withOpacity(0.12)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: hasNotes
+                          ? AppTheme.pine.withOpacity(0.10)
+                          : AppTheme.moss.withOpacity(0.10),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      hasNotes ? Icons.sticky_note_2 : Icons.note_add_outlined,
+                      size: 18,
+                      color: hasNotes ? AppTheme.pine : AppTheme.moss,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          hasNotes ? 'Notes Saved' : 'No Notes Yet',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.pine,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          hasNotes
+                              ? record!.notes!.trim()
+                              : 'Tap Add Notes to record a reason, reminder, or summary for this date.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: hasNotes ? AppTheme.ink : AppTheme.moss,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                    _editDayNotes(date, record);
+                  },
+                  icon: Icon(
+                    hasNotes ? Icons.edit_outlined : Icons.note_add_outlined,
+                  ),
+                  label: Text(hasNotes ? 'Edit Notes' : 'Add Notes'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppTheme.pine,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                    _editDayRecord(date, record);
+                  },
+                  icon: const Icon(Icons.access_time),
+                  label: const Text('Edit Times'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.clay,
+                    side: const BorderSide(color: AppTheme.clay),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
+                if (record?.id != null)
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      final confirmed = await showDialog<bool>(
+                        context: dialogContext,
+                        builder: (confirmContext) => AlertDialog(
+                          title: const Text('Remove Time'),
+                          content: const Text(
+                            'This will remove Time In and Time Out for this date. Continue?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(confirmContext, false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(confirmContext, true),
+                              child: const Text('Remove'),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirmed != true) {
+                        return;
+                      }
+
+                      await _dbService.deleteRecord(record!.id!);
+                      if (!mounted) {
+                        return;
+                      }
+                      Navigator.pop(dialogContext);
+                      await _loadMonthRecords();
+                      _showSnackBar('Time removed for this date');
+                    },
+                    icon: const Icon(Icons.delete_outline),
+                    label: const Text('Remove Time'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.clay,
+                      side: const BorderSide(color: AppTheme.clay),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
+                TextButton.icon(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  icon: const Icon(Icons.close),
+                  label: const Text('Close'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppTheme.moss,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              _editDayRecord(date, record);
-            },
-            child: Text(record == null ? 'Add Time' : 'Edit Times'),
-          ),
-          if (record?.id != null)
-            TextButton(
-              onPressed: () async {
-                final confirmed = await showDialog<bool>(
-                  context: dialogContext,
-                  builder: (confirmContext) => AlertDialog(
-                    title: const Text('Remove Time'),
-                    content: const Text(
-                      'This will remove Time In and Time Out for this date. Continue?',
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(confirmContext, false),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(confirmContext, true),
-                        child: const Text('Remove'),
-                      ),
-                    ],
-                  ),
-                );
-
-                if (confirmed != true) {
-                  return;
-                }
-
-                await _dbService.deleteRecord(record!.id!);
-                if (!mounted) {
-                  return;
-                }
-                Navigator.pop(dialogContext);
-                await _loadMonthRecords();
-                _showSnackBar('Time removed for this date');
-              },
-              child: const Text('Remove Time'),
-            ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Close'),
-          ),
-        ],
       ),
     );
   }
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
+      SnackBar(content: Text(message)),
     );
   }
 }
